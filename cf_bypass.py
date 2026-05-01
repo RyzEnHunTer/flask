@@ -33,13 +33,18 @@ def _ensure_pyquotex_http():
         import pyquotex.http.navigator  # noqa
         return  # Already importable
     except (ImportError, ModuleNotFoundError):
-        pass
-    # Walk up from this file to find a directory containing pyquotex/http/
+        try:
+            import pyquotex.network.navigator # noqa
+            return
+        except (ImportError, ModuleNotFoundError):
+            pass
+    # Walk up from this file to find a directory containing pyquotex/http/ or pyquotex/network/
     search = Path(__file__).resolve().parent
     for _ in range(5):
         search = search.parent
-        candidate = search / "pyquotex" / "http" / "navigator.py"
-        if candidate.exists():
+        candidate_http = search / "pyquotex" / "http" / "navigator.py"
+        candidate_net = search / "pyquotex" / "network" / "navigator.py"
+        if candidate_http.exists() or candidate_net.exists():
             sys.path.insert(0, str(search))
             # Force re-import from the correct location
             for key in list(sys.modules.keys()):
@@ -124,10 +129,17 @@ class CipherSuiteAdapter(HTTPAdapter):
 
 def _patch_navigator():
     """Patch pyquotex's Browser class with CipherSuiteAdapter + full headers."""
+    Browser = None
     try:
         from pyquotex.http.navigator import Browser
     except ImportError:
-        logger.warning("Could not import pyquotex.http.navigator — skipping Browser patch")
+        try:
+            from pyquotex.network.navigator import Browser
+        except ImportError:
+            pass
+
+    if not Browser:
+        logger.warning("Could not import pyquotex.http.navigator or pyquotex.network.navigator — skipping Browser patch")
         return
 
     # Save original __init__
@@ -209,10 +221,17 @@ def _patch_navigator():
 
 def _patch_login():
     """Patch pyquotex's Login class with full Sec-* headers."""
+    Login = None
     try:
         from pyquotex.http.login import Login
     except ImportError:
-        logger.warning("Could not import pyquotex.http.login — skipping Login patch")
+        try:
+            from pyquotex.network.login import Login
+        except ImportError:
+            pass
+
+    if not Login:
+        logger.warning("Could not import pyquotex.http.login or pyquotex.network.login — skipping Login patch")
         return
 
     _orig_get_token = Login.get_token
@@ -370,9 +389,16 @@ def _patch_api():
 
 def _patch_session_persistence():
     """FIX #4: Patch Login.get_profile to persist session data to disk."""
+    Login = None
     try:
         from pyquotex.http.login import Login
     except ImportError:
+        try:
+            from pyquotex.network.login import Login
+        except ImportError:
+            pass
+
+    if not Login:
         return
 
     _orig_get_profile = Login.get_profile
