@@ -13,9 +13,12 @@ import traceback
 import asyncio
 import threading
 import logging
+import requests
+import configparser
 from market_analyzer import MarketAnalyzer
 import cf_bypass  # MUST be imported BEFORE pyquotex — patches TLS/headers/WS
 from pyquotex.stable_api import Quotex
+from flask_cloudflared import run_with_cloudflared, get_cloudflared_url
 
 logger = logging.getLogger(__name__)
 
@@ -379,8 +382,45 @@ def get_news():
 
 
 if __name__ == '__main__':
+    def monitor_cloudflare():
+        url = None
+        for _ in range(60):
+            url = get_cloudflared_url()
+            if url:
+                break
+            time.sleep(1)
+            
+        if url:
+            print("\n" + "="*60)
+            print(f"🌍 PUBLIC URL: {url}")
+            print(f"🌍 ADMIN URL: {url}/admin")
+            print("="*60 + "\n")
+            try:
+                config = configparser.ConfigParser()
+                config.read(os.path.join(ROOT_PATH, "config.ini"))
+                if 'settings' in config:
+                    tg_token = config['settings'].get('tg_token', '').strip()
+                    tg_chat_id = config['settings'].get('tg_chat_id', '').strip()
+                    if tg_token and tg_chat_id and not tg_token.startswith("PUT_"):
+                        msg = f"🚀 *Quotex Premium Bot Started!*\n\n🌍 *Public Access:*\n`{url}`\n\n🔒 *Admin Panel:*\n`{url}/admin`"
+                        requests.post(
+                            f"https://api.telegram.org/bot{tg_token}/sendMessage",
+                            json={"chat_id": tg_chat_id, "text": msg, "parse_mode": "Markdown"},
+                            timeout=10
+                        )
+                        print("[OK] Telegram notification sent with public link")
+            except Exception as e:
+                print(f"[WARN] Failed to send Telegram notification: {e}")
+
+    # Start the URL monitor thread
+    threading.Thread(target=monitor_cloudflare, daemon=True).start()
+    
+    # Wrap the app with Cloudflare tunnel
+    run_with_cloudflared(app)
+    
     print("="*60)
     print("PREMIUM SIGNAL GENERATOR")
-    print("Admin : http://localhost:5000/admin")
+    print("Local Admin : http://localhost:5000/admin")
+    print("Waiting for Cloudflare Tunnel to generate public URL...")
     print("="*60)
     app.run(host='0.0.0.0', port=5000, debug=False)
