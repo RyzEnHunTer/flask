@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeMind AI — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F9FAFB;--surface:#FFFFFF;--border:#E5E7EB;
+  --text:#111827;--text2:#4B5563;--text3:#9CA3AF;
+  --blue:#1A73E8;--blue-light:#EBF3FE;--blue-mid:#DBEAFE;
+  --green:#16A34A;--green-bg:#F0FDF4;--red:#DC2626;--red-bg:#FEF2F2;
+  --amber:#D97706;--amber-bg:#FFFBEB;
+  --zinc50:#FAFAFA;--zinc100:#F4F4F5;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08)
+}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+button{cursor:pointer;font-family:'Inter',sans-serif;border:none;outline:none}
+input{font-family:'Inter',sans-serif;outline:none}
+
+/* TOP BAR — matches dashboard */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.topbar-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--text);letter-spacing:-.3px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px var(--blue-light);animation:logoPulse 2s infinite}
+@keyframes logoPulse{0%,100%{box-shadow:0 0 0 2px var(--blue-light)}50%{box-shadow:0 0 0 5px var(--blue-light)}}
+.status-chip{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border)}
+.status-chip.live{background:var(--green-bg);color:var(--green);border-color:#BBF7D0}
+.status-chip.offline{background:var(--red-bg);color:var(--red);border-color:#FECACA}
+.s-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* CENTERED LOGIN */
+.page{min-height:calc(100vh - 52px);display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:400px;box-shadow:var(--shadow-md)}
+
+/* TABS */
+.tabs{display:flex;background:var(--zinc100);padding:3px;border-radius:10px;margin-bottom:24px;gap:3px}
+.tab{flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text2);background:none;transition:all .15s;text-align:center}
+.tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:var(--shadow)}
+
+/* BRAND */
+.brand{text-align:center;margin-bottom:24px}
+.brand-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--blue),#4F9DF7);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px;box-shadow:0 6px 20px rgba(26,115,232,.25)}
+.brand h2{font-size:18px;font-weight:700;margin-bottom:4px;letter-spacing:-.3px}
+.brand p{font-size:13px;color:var(--text2)}
+
+/* FORM */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.field input{width:100%;padding:10px 14px;background:var(--zinc50);border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);transition:all .15s}
+.field input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(26,115,232,.1)}
+
+/* BUTTONS */
+.btn-primary{width:100%;padding:11px;border-radius:8px;background:var(--blue);color:white;font-size:14px;font-weight:600;transition:all .15s;margin-top:4px}
+.btn-primary:hover{background:#1557B0;box-shadow:0 4px 12px rgba(26,115,232,.3)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+/* ALERTS */
+.alert{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;display:none}
+.alert.error{background:var(--red-bg);color:var(--red);border:1px solid #FECACA}
+.alert.success{background:var(--green-bg);color:var(--green);border:1px solid #BBF7D0}
+.alert.info{background:var(--blue-light);color:var(--blue);border:1px solid #BFDBFE}
+
+/* SPINNER */
+.spinner{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:white;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* HINT */
+.hint{background:var(--zinc50);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7}
+.hint strong{color:var(--text);font-weight:600}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:10px;animation:toastIn .3s ease;min-width:220px}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.toast.success{border-left:3px solid var(--green)}
+.toast.error{border-left:3px solid var(--red)}
+.toast.info{border-left:3px solid var(--blue)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo"><div class="logo-dot"></div>TradeMind AI</div>
+  <div class="status-chip offline" id="statusChip"><span class="s-dot"></span><span id="statusText">Offline</span></div>
+</header>
+
+<div class="page">
+  <div class="card">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <h2>Admin Panel</h2>
+      <p>Connect Quotex and manage your signal service</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-connect" onclick="switchTab('connect')">Connect Quotex</button>
+      <button class="tab" id="tab-status" onclick="switchTab('status')">System Status</button>
+    </div>
+
+    <!-- CONNECT TAB -->
+    <div id="pane-connect">
+      <div class="hint">
+        <strong>Enter your Quotex credentials.</strong><br>
+        The app connects to Quotex using your account to fetch live market data and generate signals for your users.
+      </div>
+      <div class="field"><label>Quotex Email</label><input type="email" id="qEmail" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="field"><label>Quotex Password</label><input type="password" id="qPass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-primary" id="connectBtn" onclick="doConnect()">Connect to Quotex</button>
+      <div class="alert" id="connectAlert"></div>
+    </div>
+
+    <!-- STATUS TAB -->
+    <div id="pane-status" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--zinc50);border:1px solid var(--border);border-radius:8px">
+          <span style="font-weight:500">Quotex Connection</span>
+          <span id="connStatusBadge" style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px;background:var(--red-bg);color:var(--red)">Offline</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--zinc50);border:1px solid var(--border);border-radius:8px">
+          <span style="font-weight:500">Server</span>
+          <span style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px;background:var(--green-bg);color:var(--green)">Running</span>
+        </div>
+      </div>
+      <button class="btn-primary" style="margin-top:14px" onclick="doReconnect()" id="reconnectBtn">Reconnect</button>
+      <div class="alert" id="statusAlert"></div>
+      <div style="margin-top:16px;text-align:center">
+        <a href="/" style="font-size:13px;color:var(--blue);text-decoration:none;font-weight:500">View User Dashboard</a>
+      </div>
+    </div>
+
+    <!-- OTP TAB (hidden by default, shown when OTP is needed) -->
+    <div id="pane-otp" style="display:none">
+      <div class="brand">
+        <div class="brand-icon" style="background:linear-gradient(135deg,var(--amber),#F59E0B)">&#128274;</div>
+        <h2>PIN Code Required</h2>
+        <p id="otpPromptText">Enter the PIN code sent to your email</p>
+      </div>
+      <div class="field"><label>PIN CODE</label><input type="text" id="otpCode" placeholder="Enter PIN code" maxlength="8" autocomplete="one-time-code" style="font-family:'JetBrains Mono',monospace;font-size:20px;text-align:center;letter-spacing:6px"></div>
+      <button class="btn-primary" id="otpBtn" onclick="submitOtp()" style="background:var(--amber)">Submit PIN Code</button>
+      <div class="alert" id="otpAlert"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+let otpPolling = null;
+
+async function checkStatus(){
+  try{
+    const d=await(await fetch('/api/admin/status')).json();
+    const chip=document.getElementById('statusChip'),txt=document.getElementById('statusText');
+    const badge=document.getElementById('connStatusBadge');
+    if(d.connected){
+      chip.className='status-chip live';txt.textContent='Live';
+      if(badge){badge.style.background='var(--green-bg)';badge.style.color='var(--green)';badge.textContent='Connected';}
+    }else{
+      chip.className='status-chip offline';txt.textContent='Offline';
+      if(badge){badge.style.background='var(--red-bg)';badge.style.color='var(--red)';badge.textContent='Offline';}
+    }
+  }catch(e){}
+}
+checkStatus();setInterval(checkStatus,8000);
+
+function switchTab(tab){
+  ['connect','status','otp'].forEach(t=>{
+    const tabEl=document.getElementById('tab-'+t);
+    const paneEl=document.getElementById('pane-'+t);
+    if(tabEl) tabEl.classList.toggle('active',t===tab);
+    if(paneEl) paneEl.style.display=t===tab?'':'none';
+  });
+  if(tab==='status')checkStatus();
+}
+
+function startOtpPolling(){
+  if(otpPolling) return;
+  otpPolling = setInterval(async()=>{
+    try{
+      const d=await(await fetch('/api/admin/otp/status')).json();
+      if(d.otp_needed){
+        document.getElementById('otpPromptText').textContent = d.prompt || 'Enter the PIN code sent to your email';
+        switchTab('otp');
+        document.getElementById('otpCode').focus();
+      }
+    }catch(e){}
+  }, 2000);
+}
+
+function stopOtpPolling(){
+  if(otpPolling){clearInterval(otpPolling);otpPolling=null;}
+}
+
+async function doConnect(){
+  const btn=document.getElementById('connectBtn');
+  const al=document.getElementById('connectAlert');
+  const email=document.getElementById('qEmail').value.trim();
+  const pass=document.getElementById('qPass').value.trim();
+  if(!email||!pass){al.className='alert error';al.textContent='Email and password required';al.style.display='block';return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Connecting...';
+  al.className='alert info';al.textContent='Connecting — if OTP is required, a PIN input will appear...';al.style.display='block';
+
+  // Start polling for OTP requirement
+  startOtpPolling();
+
+  try{
+    const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await res.json();
+    stopOtpPolling();
+    if(d.success){
+      al.className='alert success';al.textContent='Connected! Quotex is live.';
+      checkStatus();toast('Connected to Quotex','success');
+      setTimeout(()=>switchTab('status'),1500);
+    }else{
+      switchTab('connect');
+      al.className='alert error';al.textContent=''+d.message;
+    }
+  }catch(e){stopOtpPolling();al.className='alert error';al.textContent='Network error. Try again.';}
+  btn.disabled=false;btn.innerHTML='Connect to Quotex';
+}
+
+async function submitOtp(){
+  const btn=document.getElementById('otpBtn');
+  const al=document.getElementById('otpAlert');
+  const code=document.getElementById('otpCode').value.trim();
+  if(!code||code.length<4){al.className='alert error';al.textContent='Enter a valid PIN code';al.style.display='block';return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Submitting...';
+  try{
+    const res=await fetch('/api/admin/otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+    const d=await res.json();
+    if(d.success){
+      al.className='alert success';al.textContent='PIN submitted! Verifying...';al.style.display='block';
+      toast('PIN submitted','success');
+      document.getElementById('otpCode').value='';
+    }else{
+      al.className='alert error';al.textContent=d.message;al.style.display='block';
+    }
+  }catch(e){al.className='alert error';al.textContent='Network error';al.style.display='block';}
+  btn.disabled=false;btn.innerHTML='Submit PIN Code';
+}
+
+async function doReconnect(){
+  const btn=document.getElementById('reconnectBtn');
+  const al=document.getElementById('statusAlert');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Reconnecting...';
+  al.className='alert info';al.textContent='Reconnecting...';al.style.display='block';
+  try{
+    const res=await fetch('/api/admin/reconnect',{method:'POST'});
+    const d=await res.json();
+    if(d&&d.success){al.className='alert success';al.textContent='Reconnected!';checkStatus();}
+    else{al.className='alert error';al.textContent=''+(d?.message||'Failed');}
+  }catch(e){al.className='alert error';al.textContent='Error reconnecting.';}
+  btn.disabled=false;btn.innerHTML='Reconnect';
+}
+
+function toast(msg,type='info'){
+  const el=document.createElement('div');el.className='toast '+type;
+  el.innerHTML='<span>'+msg+'</span>';
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    const otpPane=document.getElementById('pane-otp');
+    if(otpPane&&otpPane.style.display!=='none') submitOtp();
+    else doConnect();
+  }
+});
+</script>
+</body>
+</html>

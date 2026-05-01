@@ -1,0 +1,13 @@
+flask==2.3.3
+flask-cors==4.0.0
+git+https://github.com/cleitonleonel/pyquotex.git
+gunicorn==21.2.0
+websockets>=12.0
+python-dotenv==1.0.0
+aiohttp
+numpy
+flask[async]==2.3.3
+beautifulsoup4
+certifi
+requests
+urllib3
