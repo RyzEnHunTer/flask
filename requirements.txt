@@ -11,3 +11,6 @@ beautifulsoup4
 certifi
 requests
 urllib3
+flask-cloudflared
+pyotp
+curl_cffi
